@@ -1,0 +1,77 @@
+---
+- hosts: centos
+  become: true
+  tasks:
+    - name: Install required packages
+      yum: name={{item}} state=present update_cache=yes
+      with_items:
+        - "@Development tools"
+        - git
+        - epel-release
+        - wget
+        - dh-autoreconf
+        - curl-devel
+        - expat-devel
+        - gettext-devel
+        - openssl-devel
+        - perl-devel
+        - zlib-devel
+        - asciidoc
+        - xmlto
+        - docbook2X
+        - gnu-getopt
+    - name: create links
+      file: src='/usr/bin/db2x_docbook2texi' dest='/usr/bin/docbook2x-texi' state=link
+    - name: Create directory project
+      become_user: centos
+      file: path=/home/centos/project state=directory
+    - name: Git clone of git repository
+      become_user: centos
+      git: repo="https://github.com/git/git.git" dest=/home/centos/project
+    - name: Checked latest git version
+      become_user: centos
+      command: sh -c "git checkout tags/$(git describe --tags $(git rev-list --tags --max-count=1))"
+      args:
+        creates: git
+        chdir: /home/centos/project
+    - name: Checked latest git version
+      become_user: centos
+      command: make configure
+      args:
+        creates: git
+        chdir: /home/centos/project
+      register: make_configure
+    - debug:
+        msg=" {{ make_configure.stdout }}"
+    - name: Compile set makefile
+      become_user: centos
+      command: sh -c "./configure --prefix=/usr"
+      args:
+        creates: git
+        chdir: /home/centos/project
+      register: set_makefile
+    - debug:
+        msg=" {{ set_makefile.stdout }}"
+    - name: Compile all sources
+      become_user: centos
+      command: make all doc info
+      args:
+        creates: git
+        chdir: /home/centos/project
+      register: make_compile
+    - debug:
+        msg=" {{ make_compile.stdout }}"
+    - name: Install all binary
+      command: make install install-doc install-html install-info
+      args:
+        creates: git
+        chdir: /home/centos/project
+      register: install_binaries
+    - debug:
+        msg=" {{ install_binaries.stdout }}"
+
+
+
+
+
+

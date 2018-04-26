@@ -1,0 +1,2 @@
+[new-git]
+centos ansible_host=open39  ansible_user=centos ansible_ssh_private_key_file=/home/hme/.ssh/id_rsa
